@@ -25,12 +25,12 @@ Run ```python Nano_v10.py -h``` to see all available options.
 
 **There are two modes to run the pipeline:**
 
-  **1. perform basecalling using dorado and all later steps**
+  **1. perform basecalling using dorado and all later steps (GPU required)**
 
 ```
 python Nano_v10.py  -o testrun -nanopore_raw_folder ./pod5 -chimera -duplexreads -identity 0.99
 ```
-  **2. start from basecalled fastq file for processing**
+  **2. start from basecalled fastq file for processing (faster with GPU support)**
 ```
 python Nano_v10.py  -o testrun -nanopore_basecall_folder ./fastq -chimera -duplexreads -identity 0.99
 ```
