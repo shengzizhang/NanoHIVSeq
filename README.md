@@ -8,6 +8,7 @@ To install required python packages are:
 pip install biopython pandas numpy subprocess argparse
 
 The required external softwares are:
+
 conda install -c bioconda nanoplot usearch cutadapt blast seqtk HMMER medaka racon minimap2 samtools
 
 dorado: https://github.com/nanoporetech/dorado
