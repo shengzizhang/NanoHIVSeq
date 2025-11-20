@@ -35,15 +35,15 @@ python Nano_v10.py  -o testrun -nanopore_raw_folder ./pod5 -chimera -duplexreads
 python Nano_v10.py  -o testrun -nanopore_basecall_folder ./fastq -chimera -duplexreads -identity 0.99
 ```
  
-**The software has the following output folders:**
+**The software creates the following folders:**
 
 basecalled: basecalled bam files
 
-BC_split: samples are split by barcode
+BC_split: samples are split by barcode if available
 
   **Output folder:** 
   
-    basecalling: adapter removed raw transcripts of env, spikein, and plot of spikein error rates
+    basecalling: adapter trimed raw transcripts of env, spikein, and plot of spikein error rate
     
     raw_quality_plot: QC of all raw transcripts
     
