@@ -10,10 +10,12 @@ pip install biopython pandas numpy subprocess argparse
 **The required external softwares:**
 ```
 conda install -c bioconda nanoplot usearch cutadapt blast seqtk HMMER medaka racon minimap2 samtools
-
+```
+```
 vsearch (optional): conda install -c bioconda vsearch
 ```
+```
 dorado: https://github.com/nanoporetech/dorado
-
+```
 
 
