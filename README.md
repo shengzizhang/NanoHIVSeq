@@ -1,13 +1,13 @@
 # Nano_variant
 
 
-The sript here is to process nanopore generated raw reads for bulk HIV env variant identification. The pipeline incorporates bioinformatics tools to perform basecalling, HIV env gene determination, quality plot, consensus transcript generation, error correction, chimera removal, HIV env variant identification, and env sequence genotyping. The code was tested comphrehensively under Python 3.6.10.
+The sript here is to process nanopore generated raw reads for bulk HIV env variant identification. The pipeline incorporates bioinformatics tools to perform basecalling, HIV env gene determination, quality plot, consensus transcript generation, error correction, chimera removal, and HIV env variant identification and genotyping. The code was tested comphrehensively under Python 3.6.10.
 
 **To install required python packages:**
 ```
 pip install biopython pandas numpy subprocess argparse
 ```
-**The required external software:**
+**To install required external software:**
 ```
 conda install -c bioconda nanoplot usearch cutadapt blast seqtk HMMER medaka racon minimap2 samtools
 ```
@@ -56,4 +56,10 @@ BC_split: samples are split by barcode if available
     subtype: HIV subtype assignments for each env variant
     
     statistics.txt: summary of transcript numbers during pipeline processing 
+
+**Suggestions:**
+
+Nanopore basecalling models change over time, it is better to check dorado website for newest models, and can be downloaded and specified using the -nanopore_model_folder option
+
+The default primers used for env gene amplication are in our publication, we use a conserved nucleotide region upstream of env start codon to identify positive strand. If this region is not included in the transcripts, please set the '-primer5' option for the correct 5' primer.
 
