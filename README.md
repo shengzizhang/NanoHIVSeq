@@ -1,4 +1,4 @@
-# Nano_variant
+# NanoHIVSeq
 
 
 The sript here is to process nanopore generated raw reads for bulk HIV env variant identification. The pipeline incorporates bioinformatics tools to perform basecalling, HIV env gene determination, quality plot, consensus transcript generation, error correction, chimera removal, and HIV env variant identification and genotyping. The code was tested comphrehensively under Python 3.6.10.
