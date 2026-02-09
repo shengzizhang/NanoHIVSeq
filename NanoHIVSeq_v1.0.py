@@ -55,8 +55,8 @@ parser.add_argument("-simplex",action='store_true', help='whether to use simplex
 parser.add_argument("-identity",type=float, default='0.99', help='sequence idenity to use to cluster sequences for consensus generation. Default is 0.99')
 parser.add_argument("-chimera",action='store_true', help='whether to use vsearch or usearch to find chimera sequences.Default is false')
 parser.add_argument("-duplexreads",action='store_true', help='whether to use only duplex reads for env analysis. Default is false')
-parser.add_argument("-sortcurate",action='store_true', help='whether to sort consensus sequences to clusters based on similarity and curate for each cluster, ideal for mixed sample library or >500 consensus sequences are generated. Default is false')
-parser.add_argument("-sortcurate_id",type=float, default='0.95', help='sequence identity to find clusters for curation. Default is 0.95.')
+parser.add_argument("-sortcurate",action='store_true', help='whether to split consensus to small files for processing >500 consensus sequences. Default is false')
+parser.add_argument("-sortcurate_id",type=float, default='0.9',help='sequence idenity to cluster consensus sequence for curation')
 
 args=parser.parse_args()
 
@@ -182,13 +182,15 @@ def dorado_duplex(wk_folder):
         os.makedirs(wk_folder,exist_ok = True)    
         if not args.umi:
             #find env sequences
-            os.system(f"{cutadapt} -j {cpunum} -m 2000 -M 6000 -e 0.15 -O 12 -g {args.primer5}  --untrimmed-output {wk_folder}/no_primer5.fq BC_split/{folderBC}.fastq > {wk_folder}/adapter_removed.fq")
-            os.system(f"{seqtk} seq -r {wk_folder}/no_primer5.fq | cutadapt -j {cpunum} -O 12 -e 0.15 -m 2000 -M 6000 -g {args.primer5} --discard-untrimmed - >> {wk_folder}/adapter_removed.fq")
+            '''
+            os.system(f"{cutadapt} -j {cpunum} -m 1000 -M 6000 -e 0.15 -O 12 -g {args.primer5}  --untrimmed-output {wk_folder}/no_primer5.fq BC_split/{folderBC}.fastq > {wk_folder}/adapter_removed.fq")
+            os.system(f"{seqtk} seq -r {wk_folder}/no_primer5.fq | cutadapt -j {cpunum} -O 12 -e 0.15 -m 1000 -M 6000 -g {args.primer5} --discard-untrimmed - >> {wk_folder}/adapter_removed.fq")
             os.system(f"{seqtk} seq -A {wk_folder}/adapter_removed.fq >{wk_folder}/adapter_removed.fa")
+            '''
+            os.system(f"{seqtk} seq -A BC_split/{folderBC}.fastq >{wk_folder}/adapter_removed.fa")
             
             #find spikein sequences
-            
-            os.system(f"{cutadapt} -j {cpunum} -m 2000 -M 4000 -e 0.15 -O 12 -g TGCTTCCAGAGACACCTT  --fasta --untrimmed-output {wk_folder}/no_adapter_spikein.fa {wk_folder}/no_primer5.fq  > {wk_folder}/adapter_removed_spikein.fa")
+            os.system(f"{cutadapt} -j {cpunum} -m 2000 -M 4000 -e 0.15 -O 12 -g TGCTTCCAGAGACACCTT  --fasta --untrimmed-output {wk_folder}/no_adapter_spikein.fa BC_split/{folderBC}.fastq > {wk_folder}/adapter_removed_spikein.fa")
             os.system(f"{seqtk} seq -r {wk_folder}/no_adapter_spikein.fa | {cutadapt} -j {cpunum} -O 14 -e 0.15 --fasta -m 1000 -M 4000 -g TGCTTCCAGAGACACCTT  --discard-untrimmed - >> {wk_folder}/adapter_removed_spikein.fa")
             spikeincount=write_statistics(f"{wk_folder}/adapter_removed_spikein.fa",fileformat='fasta')
             if spikeincount>10:
@@ -197,10 +199,10 @@ def dorado_duplex(wk_folder):
                 print("no spikein found in the NGS")
             #proceed to remove long reads
             filtering_seq(wk_folder + "/adapter_removed.fa",wk_folder)
-            #find_env(wk_folder + "/adapter_removed.fa",wk_folder)
+            find_env(wk_folder + "/adapter_removed.fa",wk_folder)
         else:
-            os.system(f"{cutadapt} --action none -j " + str(cpunum)  + f" -e 0.15 -O 12 -m 1000 -M 4000 -g {args.primer5} --untrimmed-output " + wk_folder + f"/no_primer5.fq BC_split/{folderBC}.fastq"> " {wk_folder}/adapter_removed.fq")
-            os.system(f"{seqtk} seq -r {wk_folder}/no_primer5.fq | {cutadapt} --action none -j " + str(cpunum)  + f" -e 0.15 -O 12 -m 1000 -M 4000 -g {args.primer5}  --discard-untrimmed - >> " + wk_folder + "/adapter_removed.fq") 
+            os.system(f"{cutadapt} --action none -j {cpunum} -e 0.15 -O 12 -m 1000 -M 6000 -g {args.primer5} --untrimmed-output {wk_folder}/no_primer5.fq BC_split/{folderBC}.fastq > {wk_folder}/adapter_removed.fq")
+            os.system(f"{seqtk} seq -r {wk_folder}/no_primer5.fq | {cutadapt} --action none -j " + str(cpunum)  + f" -e 0.15 -O 12 -m 1000 -M 6000 -g {args.primer5}  --discard-untrimmed - >> " + wk_folder + "/adapter_removed.fq") 
             
             #find spikein sequences
             os.system(f"{cutadapt} -j " + str(cpunum)  + " -m 1000 -M 4000 -e 0.15 -O 12 -g TGCTTCCAGAGACACCTT  --fasta --untrimmed-output " + wk_folder + "/no_adapter_spikein.fa " + wk_folder + "/no_primer5.fq > " + wk_folder + "/adapter_removed_spikein.fa")
@@ -224,7 +226,7 @@ def umimerge_duplex(folder,fo):
     if check_status==2 or args.force:
         subprocess.call("rm -r " + folder + "/umib", shell=True)
         #os.system("cd " + folder + "; longread_umi nanopore_pipeline -d adapter_removed.fq  -v 2 -o umib -s 200 -e 200 -m 1000 -M 5000 -f CTGATATTGC -F CACCTTAGGCATCTCCTATGGCAGGAAGAAG -r CGCTCTATCTTC -R GTCTCGAGATACTGCTCCCACCC -c 2 -p 2 -q /data2/Zizhang/Antibodyomics/nanopore/models/r1041_e82_400bps_hac_v4.3.0_model.tar.gz  -t " + str(cpunum) )
-        os.system(f"cd {folder}; longread_umi nanopore_pipeline -d adapter_removed.fq  -v 2 -o umib -s 200 -e 200 -m 1000 -M 5000 -f TTTCTGTTGGTGCTGATATTGC -F CACCTTAGGCATCTCCTATGGCAGGAAGAAG -r ACTTGCCTGTCGCTCTATCTTC -R GTCTCGAGATACTGCTCCCACCC -c 2 -p 2 -q {args.medaka_model}  -t {cpunum}" )    
+        os.system(f"cd {folder}; longread_umi nanopore_pipeline -d ../../BC_split/{fo}.fastq  -v 3 -o umib -s 200 -e 200 -m 1000 -M 6000 -f TTTCTGTTGGTGCTGATATTGC -F CACCTTAGGCATCTCCTATGGCAGGAAGAAG -r ACTTGCCTGTCGCTCTATCTTC -R GTCTCGAGATACTGCTCCCACCC -c 2 -p 2 -q {args.medaka_model}  -t {cpunum}" )    
         #moving binned reads to consensus folder for consensus sequence generation
         subprocess.call("rm -r " + f"{folder}/../{consenout}", shell=True)
         os.makedirs(f"{folder}/../{consenout}",exist_ok = True)
@@ -243,41 +245,33 @@ def umimerge_duplex(folder,fo):
                 
             else:
                 sys.exit("no UMI bins found\n")
-        finish_mark(f"{folder}/../{consenout}")
+        #finish_mark(f"{folder}/../{consenout}")
     else:
         print("skipping UMI processing since it was done")
 
 ##########################filter and cut long reads################
-def filtering_seq(file,wk_folder):
-    longread=0
-    with open(file, 'r') as f:
+def filtering_seq(file1, wk_folder):
+    with open(file1, 'r') as f:
         lines = f.readlines()
-    with open(wk_folder + "/env_hits.fasta", 'w') as f1:
-        with open(wk_folder + "/longread.fasta", 'w') as f2:
-            for i in range(len(lines)):
-                if lines[i].startswith('>'):
-                    id = lines[i].strip()
-                    id = id.replace(';', '-').replace(':', '-').replace(' ', '-')
-                    id=re.sub(r'\t.*','',id)
-                else:
-                    if len(lines[i]) > 3000:
-                        longread+=1
-                        f2.write(id+"\n" + lines[i])
-                    else:
-                        f1.write(id+"\n" + lines[i])
-        f2.close()
+    with open(wk_folder + "/adapter_removed_rename.fasta", 'w') as f1:
+        for i in range(len(lines)):
+            if lines[i].startswith('>'):
+                id = lines[i].strip()
+                id = id.replace(';', '-').replace(':', '-').replace(' ', '-')
+                id=re.sub(r'\t.*','',id)
+            else:
+                f1.write(id+"\n" + lines[i])
     f1.close()
-    print("####Found ", longread, " unsplit reads #####\nUsing HMMSEARCH to find env region\n")
-    find_env(wk_folder + "/longread.fasta",wk_folder)
+    os.system(f"mv {wk_folder}/adapter_removed_rename.fasta {wk_folder}/adapter_removed.fa")
 
-def find_env(file,wk_folder):
+def find_env(file1,wk_folder):
     seqs = {}
-    total_seq = subprocess.check_output("grep -c '>' " + file, shell=True)
+    total_seq = subprocess.check_output("grep -c '>' " + file1, shell=True)
     total_seq = int(total_seq.decode().strip())
     split_per_file = int(total_seq/int(str(cpunum) )) + 1
     print(f"Total threads: {cpunum}")
     
-    with open(file, 'r') as f:
+    with open(file1, 'r') as f:
         lines = f.readlines()
     i = 0
     j = 0
@@ -319,7 +313,7 @@ def find_env(file,wk_folder):
 
 def hmmsearchp(file1):
     print(file1)    
-    subprocess.call(f"{nhmmer} --tblout " + file1 + ".txt -o "+ file1+".log -E 1e-40 --tformat fasta  --noali --cpu 1 {hmmprofile} " + file1, shell=True)
+    subprocess.call(f"{nhmmer} --tblout {file1}.txt -o {file1}.log -E 1e-40 --tformat fasta  --noali --cpu 1 {hmmprofile} {file1}", shell=True)
 
 ##########################generate consensus sequences ################
 def bin_clusters(file1, id1):
@@ -532,8 +526,7 @@ def HMM_to_fasta(fastafile, hmmtable,fastaout,writep='w',correction='F',attach_r
                             else:
                                 fo.write(">" + l[0] + "\n" + str(seq) + "\n") 
 
-                               
-            
+                                           
 ########################## sequence curation ################
 def env_seq(fo):
     check_status=check_finish(wk_folder)    
@@ -548,7 +541,7 @@ def env_seq(fo):
             os.system(f"cp {wk_folder}/envs_nt.fasta {wk_folder}/envs_nt_curated.fasta")
             print('Not enough consensus sequence found for curation\nSkipping curation\n')             
         elif seqcount>500 or args.sortcurate:
-            curateby_similarity(wk_folder+"/envs_nt.fasta")
+            curateby_similarity(wk_folder+"/envs_nt.fasta",seqcount//300)
             print('do')
         else:
             print(f"{seqcount} consensus sequences")
@@ -568,13 +561,17 @@ def env_seq(fo):
                 seqsaa = {}
                 size_c={}
                 id = ''
+                uchimescore={}
+                
                 size_combined=0
                 for line in ZZ:
                     if line.startswith(">"):
                         size_combined=re.search(r"size=(\d+)",line).group(1)
+                        uchimescore1=re.search(r"uchime_denovo=([\d\.]+)",line.strip()).group(1)
                         id = line
                         id = re.sub('[ \t\;].+','',id).strip()
                         size_c[id]=size_combined
+                        uchimescore[id]=uchimescore1 
                     else:
                         seqs[id] = seqs.get(id, '') + line.strip().upper()
                 for title in sorted(seqs.keys()):
@@ -597,15 +594,15 @@ def env_seq(fo):
                             else:
                                 finalaa = aa
                                 break
-                        if finalaa:
+                        if finalaa and float(uchimescore[title])<0.28:
                             leng=len(finalaa)
-                            AA.write(f"{title};length={leng};rawsize={sizeseq};size={size_c[title]};\n{finalaa}\n")
+                            AA.write(f"{title};length={leng};uchime_denovo={uchimescore[title]};rawsize={sizeseq};size={size_c[title]};\n{finalaa}\n")
                             ntorf=seqs[title]
                             seqs[title]=ntorf[orfc-1:]
-                            CHI.write(f"{title};length={leng};rawsize={sizeseq};size={size_c[title]};\n{seqs[title]}\n")
+                            CHI.write(f"{title};length={leng};uchime_denovo={uchimescore[title]};rawsize={sizeseq};size={size_c[title]};\n{seqs[title]}\n")
                             count_aa += 1
                         else:
-                            ORFwrong.write(f"{title};length={leng_raw};rawsize={sizeseq};size={size_c[title]};\n{seqs[title]}\n")
+                            ORFwrong.write(f"{title};length={leng_raw};uchime_denovo={uchimescore[title]};rawsize={sizeseq};size={size_c[title]};\n{seqs[title]}\n")
                 AA.close()
                 ORFwrong.close()
                 ZZ.close()
@@ -624,7 +621,7 @@ def env_seq(fo):
                             sizeseq=0
                             if title1 in seq_depth:
                                 sizeseq=seq_depth[title1]
-                            title1=f"{line.strip()}_length={leng};rawsize={sizeseq};size={size_c[line.strip()]}"
+                            title1=f"{line.strip()}_length={leng};uchime_denovo={uchimescore[line.strip()]};rawsize={sizeseq};size={size_c[line.strip()]}"
                             if line.strip() in seqs:
                                 ORF.write(f"{title1}\n{seqs[line.strip()]}\n")
                                 ORFfrag.write(fragment(title1, seqs[line.strip()]))
@@ -643,22 +640,25 @@ def count_sequences(seqfile):
             j+=1
             
     return j
-def curateby_similarity(ntfile):
+def curateby_similarity(ntfile,splits):
     subprocess.call(f"rm {wk_folder}/tempcluster*", shell=True)
-    subprocess.call(f"{usearch} -cluster_fast {ntfile} -clusters {wk_folder}/tempcluster -id {args.sortcurate_id} -sort size", shell=True)
-    for f in glob.glob(f'{wk_folder}/tempcluster*'):
+    if splits<2:
+        splits=2
+    #subprocess.call(f"{usearch} -cluster_fast {ntfile} -clusters {wk_folder}/tempcluster -id {args.sortcurate_id} -sort size", shell=True)    
+    subprocess.call(f"{usearch} -fastx_split {ntfile} -splits {splits} -fastaout xx -outname {wk_folder}/tempcluster@.fasta ", shell=True)
+    for f in sorted(glob.glob(f'{wk_folder}/tempcluster*')):
+        if count_sequences(f)<20:
+            subprocess.call(f"cat {f} >>{wk_folder}/tempcluster1.fasta", shell=True)
+            subprocess.call(f"rm {f} ", shell=True)
+            print(f"{f} is merged to tempcluster1.fasta")
+    
+    for f in sorted(glob.glob(f'{wk_folder}/tempcluster*')):
         if count_sequences(f)>10:
             print(f"curating {f}")
             os.rename(f,f"{f}.fasta")
             curation(f"{f}.fasta")
         else:
-            subprocess.call(f"cat {f} >>{wk_folder}/tempclusterrest.fasta", shell=True)
-    if count_sequences(f'{wk_folder}/tempclusterrest.fasta') >20:
-        print(f"curating tempclusterrest.fasta")
-        curation(f'{wk_folder}/tempclusterrest.fasta')
-    else:
-        print(f"too few sequences in tempclusterrest.fasta, not curated...")
-        os.rename(f'{wk_folder}/tempclusterrest.fasta',f'{wk_folder}/tempclusterrest_curated.fasta')
+            warnings.warn(f'{f} was not curated due to low number of sequences')
     subprocess.call(f"cat {wk_folder}/tempcluster*curated.fasta >> {wk_folder}/envs_nt_curated.fasta; rm {wk_folder}/tempcluster*", shell=True)
     
                
@@ -764,11 +764,24 @@ def curation(file):
         count1=0
         seq=str(align1[i].seq)
         for match in re.finditer('\w\-\w',seq):
+            count0=sorted(nt_coln[match.start()].items(), key=lambda t: t[1],reverse=True)
             count=sorted(nt_coln[match.start()+1].items(), key=lambda t: t[1],reverse=True)
+            count2=sorted(nt_coln[match.start()+2].items(), key=lambda t: t[1],reverse=True)
+            count3=sorted(nt_coln[match.start()+3].items(), key=lambda t: t[1],reverse=True)
             if count[0][0]!='-':
                 seq=seq[:match.start()+1]+count[0][0]+seq[match.start()+2:]
                 align1[i].seq=Seq(seq)
                 print(f"{align1[i].id} position {match.start()+1} is curated to {count[0][0]}")
+                count1 +=1
+            elif count0[0][0]=='-' and count2[0][0]=='-':
+                seq=seq[:match.start()]+'---'+seq[match.start()+3:]
+                align1[i].seq=Seq(seq)
+                print(f"{align1[i].id} position {match.start()+1} to {match.start()+3} is curated to ---")
+                count1 +=1
+            elif count0[0][0]!='-' and count2[0][0]=='-' and count3[0][0]=='-':
+                seq=seq[:match.start()+1]+'---'+seq[match.start()+4:]
+                align1[i].seq=Seq(seq)
+                print(f"{align1[i].id} position {match.start()+2} to {match.start()+4} is curated to ---")
                 count1 +=1
         for match in re.finditer('^\-\w',seq):
             count=sorted(nt_coln[match.start()].items(), key=lambda t: t[1],reverse=True)
@@ -785,12 +798,24 @@ def curation(file):
                 print(f"{align1[i].id} position {match.start()} is curated to {count[0][0]}")
                 count1 +=1
         for match in re.finditer('\w\-\-\w',seq):
+            count0=sorted(nt_coln[match.start()].items(), key=lambda t: t[1],reverse=True)
             count=sorted(nt_coln[match.start()+1].items(), key=lambda t: t[1],reverse=True)
             count2=sorted(nt_coln[match.start()+2].items(), key=lambda t: t[1],reverse=True)
+            count3=sorted(nt_coln[match.start()+3].items(), key=lambda t: t[1],reverse=True)
             if count[0][0] !='-' and count2[0][0] !='-':
                 seq=seq[:match.start()+1]+count[0][0]+count2[0][0]+seq[match.start()+3:]
                 align1[i].seq=Seq(seq)
                 print(f"{align1[i].id} position {match.start()+1} {match.start()+2} is curated to {count[0][0]}{count2[0][0]}")
+                count1 +=1
+            elif count0[0][0] =='-' and count[0][0] =='-' and count2[0][0] =='-' and count3[0][0] !='-':
+                seq=seq[:match.start()]+'---'+seq[match.start()+3:]
+                align1[i].seq=Seq(seq)
+                print(f"{align1[i].id} position {match.start()+1} {match.start()+3} is curated to ---")
+                count1 +=1
+            elif count0[0][0] !='-' and count[0][0] =='-' and count2[0][0] =='-' and count3[0][0] =='-':
+                seq=seq[:match.start()+1]+'---'+seq[match.start()+4:]
+                align1[i].seq=Seq(seq)
+                print(f"{align1[i].id} position {match.start()+2} {match.start()+4} is curated to ---")
                 count1 +=1
         for match in re.finditer('\w\-\-\-\-\w',seq):
             count=sorted(nt_coln[match.start()+1].items(), key=lambda t: t[1],reverse=True)
