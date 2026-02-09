@@ -60,7 +60,7 @@ BC_split: samples are split by barcode if available
 **process non-HIV env dataset**
    To process non-HIV env dataset, it will be optimal to remove non-target region in the input reads. Alternatively, either a HMMprofile or 5' primer can be provided to locate the target region in raw reads before clustering.
  ```
-   python NanoHIVSeq_nonHIV.py  -o testrun -nanopore_raw_folder ./pod5 -chimera -duplexreads -identity 0.99
+   python NanoHIVSeq_nonHIV.py  -o testrun -nanopore_basecall_folder ./fastq -chimera -duplexreads -identity 0.975
 ```
 **Suggestions:**
 
