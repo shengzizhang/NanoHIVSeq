@@ -22,18 +22,18 @@ If installing the above packages manually, please open Nano_variant.py and setup
 
 **Running the code**
 
-Run ```python Nano_v10.py -h``` to see all available options.
+Run ```python NanoHIVSeq.py -h``` to see all available options.
 
 **There are two modes to run the pipeline:**
 
   **1. perform basecalling using dorado and all later steps (GPU required)**
 
 ```
-python Nano_v10.py  -o testrun -nanopore_raw_folder ./pod5 -chimera -duplexreads -identity 0.99
+python NanoHIVSeq.py  -o testrun -nanopore_raw_folder ./pod5 -chimera -duplexreads -identity 0.99
 ```
   **2. start from basecalled fastq file for processing (faster with GPU support)**
 ```
-python Nano_v10.py  -o testrun -nanopore_basecall_folder ./fastq -chimera -duplexreads -identity 0.99
+python NanoHIVSeq.py  -o testrun -nanopore_basecall_folder ./fastq -chimera -duplexreads -identity 0.99
 ```
  
 **The software creates the following folders:**
@@ -57,7 +57,11 @@ BC_split: samples are split by barcode if available
     subtype: HIV subtype assignments for each env variant
     
     statistics.txt: summary of transcript numbers during pipeline processing 
-
+**process non-HIV env dataset**
+   To process non-HIV env dataset, it will be optimal to remove non-target region in the input reads. Alternatively, either a HMMprofile or 5' primer can be provided to locate the target region in raw reads before clustering.
+ ```
+   python NanoHIVSeq_nonHIV.py  -o testrun -nanopore_raw_folder ./pod5 -chimera -duplexreads -identity 0.99
+```
 **Suggestions:**
 
 Nanopore basecalling models change over time, it is better to check dorado website for newest models, and can be downloaded and specified using the -nanopore_model_folder option
