@@ -11,8 +11,9 @@ pip install biopython pandas numpy subprocess argparse
 ```
 conda install -c bioconda nanoplot usearch cutadapt blast seqtk HMMER medaka racon minimap2 samtools
 ```
+usearch has to be <v12.
 ```
-vsearch (optional): conda install -c bioconda vsearch
+vsearch: conda install -c bioconda vsearch
 ```
 ```
 dorado: https://github.com/nanoporetech/dorado
