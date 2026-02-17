@@ -65,12 +65,12 @@ BC_split: samples are split by barcode if available
 **docker image**
 A docker image of the pipeline can be accessed via: https://hub.docker.com/r/zzshenglab/nanohivseq
 
-Requirements
+Requirements:
 
 NVIDIA GPU with CUDA support
 nvidia-docker2 installed
 
-Quick Start
+Quick Start:
 
 For HIV Data (POD5 files)
 ```
