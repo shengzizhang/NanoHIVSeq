@@ -64,17 +64,20 @@ BC_split: samples are split by barcode if available
 ```
 **docker image**
 A docker image of the pipeline can be accessed via: https://hub.docker.com/r/zzshenglab/nanohivseq
+
 Requirements
+
 NVIDIA GPU with CUDA support
 nvidia-docker2 installed
 
 Quick Start
+
 For HIV Data (POD5 files)
 ```
 sudo docker run -it --rm
 --gpus all
 -w /work/out
--v "$(pwd)/example_data/new_example":/work/pod5
+-v "$(pwd)/example_data":/work/pod5
 -v "$(pwd)/example_output/example":/work/out
 zzshenglab/nanohivseq:v1.0 \  -o output
 -nanopore_raw_folder /work/pod5 \  -chimera
@@ -86,7 +89,7 @@ For Non-HIV Data (FASTQ files)
 sudo docker run -it --rm
 --gpus all
 -w /work/out
--v "$(pwd)/example_data/new_example":/work/fastq
+-v "$(pwd)/example_data":/work/fastq
 -v "$(pwd)/example_output/plasmidDNA_fastq":/work/out
 zzshenglab/nanohivseq:v1.0 \  --nonhiv
 -o /work/out
