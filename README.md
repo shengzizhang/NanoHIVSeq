@@ -68,6 +68,7 @@ A docker image of the pipeline can be accessed via: https://hub.docker.com/r/zzs
 Requirements:
 
 NVIDIA GPU with CUDA support
+
 nvidia-docker2 installed
 
 Quick Start:
