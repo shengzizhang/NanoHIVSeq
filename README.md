@@ -74,30 +74,38 @@ nvidia-docker2 installed
 Quick Start:
 
 For HIV Data (POD5 files)
+
 ```
-sudo docker run -it --rm
---gpus all
--w /work/out
--v "$(pwd)/example_data":/work/pod5
--v "$(pwd)/example_output/example":/work/out
-zzshenglab/nanohivseq:v1.0 \  -o output
--nanopore_raw_folder /work/pod5 \  -chimera
--duplexreads
--identity 0.99
+sudo docker run -it --rm \
+  --gpus all \
+  -w /work/out \
+  -v "$(pwd)/example_data":/work/pod5 \
+  -v "$(pwd)/example_output/example":/work/out \
+zzshenglab/nanohivseq:v1.0 \ 
+  -o output \
+  -nanopore_raw_folder /work/pod5 \ 
+  -chimera \
+  -duplexreads \
+  -identity 0.99
+
 ```
+
 For Non-HIV Data (FASTQ files)
+
 ```
-sudo docker run -it --rm
---gpus all
--w /work/out
--v "$(pwd)/example_data":/work/fastq
--v "$(pwd)/example_output/plasmidDNA_fastq":/work/out
-zzshenglab/nanohivseq:v1.0 \  --nonhiv
--o /work/out
--nanopore_basecall_folder /work/fastq
--chimera
--duplexreads
--identity 0.975
+sudo docker run -it --rm \
+  --gpus all \
+  -w /work/out \
+  -v "$(pwd)/example_data":/work/fastq \
+  -v "$(pwd)/example_output/plasmidDNA_fastq":/work/out \
+zzshenglab/nanohivseq:v1.0 \ 
+  --nonhiv \
+  -o /work/out \
+  -nanopore_basecall_folder /work/fastq \
+  -chimera \
+  -duplexreads \
+  -identity 0.975
+
 ```
 
 
