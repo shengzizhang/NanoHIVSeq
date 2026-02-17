@@ -16,7 +16,7 @@ usearch has to be <v12.
 vsearch: conda install -c bioconda vsearch
 ```
 ```
-dorado: https://github.com/nanoporetech/dorado
+dorado v0.9.7: https://github.com/nanoporetech/dorado
 ```
 If installing the above packages manually, please open Nano_variant.py and setup the absolute path to each software.
 
