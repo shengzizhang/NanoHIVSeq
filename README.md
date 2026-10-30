@@ -122,7 +122,7 @@ Nanopore basecalling models change over time, it is better to check dorado websi
 
 The default primers used for env gene amplication are in our publication, we use a conserved nucleotide region upstream of env start codon to identify positive strand. If this region is not included in the transcripts, please set the '-primer5' option for the correct 5' primer.
 
-Duplex reads are not generated from ONT flow cells earlier than R10.4. Thus, the -duplexreads option should be turned off for processing older ONT flow cells. 
+Duplex reads are not generated from ONT flow cells earlier than R10.4. Thus, the -duplexreads option should be turned off for processing data generated from older ONT flow cells. 
 
 For libraries containing biological indels in the target genes, please turn on -noindelcurate to reduce potential artifacts.
 
