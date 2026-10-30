@@ -94,7 +94,7 @@ parser.add_argument("-duplexreads",action='store_true', help='whether to use onl
 parser.add_argument("-sortcurate",action='store_true', help='whether to sort consensus sequences to clusters based on similarity and curate for each cluster, ideal for mixed sample library or >500 consensus sequences are generated. Default is false')
 parser.add_argument("-sortcurate_id",type=float, default='0.95', help='sequence identity to find clusters for curation. Default is 0.95.')
 parser.add_argument("-hmmprofile",type=str, default='', help='HMM file for finding target region')
-
+parser.add_argument("-noindelcurate",action='store_true',help='whether to turn off indel curation. For biological samples containing pseudo genes, turning off indel curation may reduce non-biological sequences in the final dataset')
 args=parser.parse_args()
 hmmprofile=args.hmmprofile
 
@@ -540,9 +540,9 @@ def env_seq(fo):
             os.system(f"cp {wk_folder}/../consensus{fo}/consensus_unique.fasta {wk_folder}/envs_nt.fasta")
         seqscon = SeqIO.parse(f"{wk_folder}/envs_nt.fasta", "fasta")
         seqcount= len(list(seqscon))   
-        if seqcount<3:
+        if seqcount<3 or args.noindelcurate:
             os.system(f"cp {wk_folder}/envs_nt.fasta {wk_folder}/envs_nt_curated.fasta")
-            print('Not enough consensus sequence found for curation\nSkipping curation\n')             
+            print('Not enough consensus sequence found for curation or indel curation bypassed by user\nSkipping curation\n')             
         elif seqcount>500 or args.sortcurate:
             curateby_similarity(wk_folder+"/envs_nt.fasta")
             print('do')
