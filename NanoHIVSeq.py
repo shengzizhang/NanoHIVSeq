@@ -95,7 +95,7 @@ parser.add_argument("-chimera",action='store_true', help='whether to use vsearch
 parser.add_argument("-duplexreads",action='store_true', help='whether to use only duplex reads for env analysis. Default is false')
 parser.add_argument("-sortcurate",action='store_true', help='whether to split consensus to small files for processing >500 consensus sequences. Default is false')
 parser.add_argument("-sortcurate_id",type=float, default='0.9',help='sequence idenity to cluster consensus sequence for curation')
-
+parser.add_argument("-noindelcurate",action='store_true',help='whether to turn off indel curation. For biological samples containing pseudo genes, turning off indel curation may reduce non-biological sequences in the final dataset')
 args=parser.parse_args()
 
 cpunum=args.cputhreads
@@ -140,35 +140,37 @@ def spikein_error_rate(spike_path):
             os.system(f"{usearch} -fastx_subsample {spike_path}/adapter_removed_spikein.fa -sizein -sizeout -sample_size 10000 -fastaout {spike_path}/spikein_10000.fa;{blastn} -db {spikeinfile} -query {spike_path}/spikein_10000.fa -outfmt '6 qseqid sseqid pident length mismatch gaps qstart qend sstart send evalue bitscore sstrand' -gapopen 5 -gapextend 2 -penalty -1 -num_threads {cpunum}  -reward 1 -evalue 1e-3 -max_target_seqs 1 >{spike_path}/spikein_blastn.txt")
     else:
         os.system(f"{blastn} -db {spikeinfile} -query {spike_path}/adapter_removed_spikein.fa -outfmt '6 qseqid sseqid pident length mismatch gaps qstart qend sstart send evalue bitscore sstrand' -gapopen 5 -gapextend 2 -penalty -1 -num_threads {cpunum}  -reward 1 -evalue 1e-3 -max_target_seqs 1 >{spike_path}/spikein_blastn.txt")
-    df = pd.read_csv(f"{spike_path}/spikein_blastn.txt", sep='\t')
-    df=df[df.iloc[:,2]>90]
-    df.iloc[:,2]=100-df.iloc[:,2]
-    df_low=[]
-    df_high=[]
-    j=0
-    for i in df.iloc[:,0]:
-        nt=re.findall(';',str(i))
-        if len(nt)>2:
-            df_high.append(df.iloc[j,2])
-        else:
-            df_low.append(df.iloc[j,2])
-        j+=1
-        
-    plt.hist(df_low,bins=100,color = "skyblue")
-    plt.hist(df_high,bins=100,alpha=0.5,color = "red")
-    plt.hist(df.iloc[:,2],bins=100)
-    plt.xlabel('Error %')
-    plt.ylabel('Frequency')
-    plt.savefig(f"{spike_path}/pikein_errorrate.png")
-    plt.close()
-    #print("Spikein error rate high quality mean: "+str(np.mean(df_high))+"\n")
-    #print("Spikein error rate high quality std: "+str(np.std(df_high))+"\n")
-    print("Spikein error rate mean: "+str(np.mean(df_low))+"\n")
-    print("Spikein error rate std: "+str(np.std(df_low))+"\n")
-    with open(f"{spike_path}/spikein_error.txt",'w') as f:
-        f.write(f"Spikein_mean_error\tSD\n{np.mean(df_low)}\t{np.std(df_low)}\n")
-    f.close()
-
+    if os.path.getsize(f"{spike_path}/spikein_blastn.txt") > 0:
+        df = pd.read_csv(f"{spike_path}/spikein_blastn.txt", sep='\t')
+        df=df[df.iloc[:,2]>90]
+        df.iloc[:,2]=100-df.iloc[:,2]
+        df_low=[]
+        df_high=[]
+        j=0
+        for i in df.iloc[:,0]:
+            nt=re.findall(';',str(i))
+            if len(nt)>2:
+                df_high.append(df.iloc[j,2])
+            else:
+                df_low.append(df.iloc[j,2])
+            j+=1
+            
+        plt.hist(df_low,bins=100,color = "skyblue")
+        plt.hist(df_high,bins=100,alpha=0.5,color = "red")
+        plt.hist(df.iloc[:,2],bins=100)
+        plt.xlabel('Error %')
+        plt.ylabel('Frequency')
+        plt.savefig(f"{spike_path}/pikein_errorrate.png")
+        plt.close()
+        #print("Spikein error rate high quality mean: "+str(np.mean(df_high))+"\n")
+        #print("Spikein error rate high quality std: "+str(np.std(df_high))+"\n")
+        print("Spikein error rate mean: "+str(np.mean(df_low))+"\n")
+        print("Spikein error rate std: "+str(np.std(df_low))+"\n")
+        with open(f"{spike_path}/spikein_error.txt",'w') as f:
+            f.write(f"Spikein_mean_error\tSD\n{np.mean(df_low)}\t{np.std(df_low)}\n")
+        f.close()
+    else:
+        print("no spikein reads found")
 ##########################basecalling################
 def dorado_duplex(wk_folder):
     barcodeinfo=''
@@ -578,9 +580,9 @@ def env_seq(fo):
         #os.system(f"cp {wk_folder}/../consensus{fo}/consensus_unique.fasta {wk_folder}/envs_nt.fasta")
         seqscon = SeqIO.parse(f"{wk_folder}/envs_nt.fasta", "fasta")
         seqcount= len(list(seqscon))   
-        if seqcount<3:
+        if seqcount<3 or args.noindelcurate:
             os.system(f"cp {wk_folder}/envs_nt.fasta {wk_folder}/envs_nt_curated.fasta")
-            print('Not enough consensus sequence found for curation\nSkipping curation\n')             
+            print('Not enough consensus sequence found for curation or bypassed by user\nSkipping curation\n')             
         elif seqcount>500 or args.sortcurate:
             curateby_similarity(wk_folder+"/envs_nt.fasta",seqcount//300)
             print('do')
